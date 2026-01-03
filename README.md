@@ -45,7 +45,7 @@
 - A page to add logs
 - A basic navigation bar
 
-#### Add Simple Charts (JS + Chart.js)
+#### Add Simple Charts (JS + Plotly)
 *static folder holds css, js, and images folders for styling*
 - Sleep hours over time
 - Steps over time

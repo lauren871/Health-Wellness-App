@@ -4,6 +4,10 @@ from config import Config # Import configuration settings
 from models import db  # Import the database object
 from database import init_app, sample_data, empty_db  # Import database initialization and sample data functions
 from models.health_models import Meal, Sleep, Steps, Weight  # Import health models
+import plotly.graph_objects as go
+import plotly.express as px
+from sqlalchemy import func
+
 
 app = Flask(__name__) # Initialize the Flask application
 
@@ -112,7 +116,54 @@ def delete(log_type, log_id):
 '''Dashboard route for viewing health statistics'''
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html')
+    # Get aggregated data
+    calories_by_date = db.session.query(
+        Meal.date, # Group by date
+        func.sum(Meal.calories) # Sum calories per date
+    ).group_by(Meal.date).all() # Group by date
+
+    sleep_data = Sleep.query.all() # Get all sleep data
+    steps_data = Steps.query.all() # Get all steps data
+    weight_data = Weight.query.all() # Get all weight data
+
+    # Create Charts
+    dates = [item[0] for item in calories_by_date] # Extract dates from query result
+    calories = [item[1] for item in calories_by_date] # Extract calories from query result
+
+    calories_chart = px.line(
+        x=dates,
+        y=calories,
+        title='Daily Calories',
+        labels={'x': 'Date', 'y': 'Calories'}
+    ).to_html(full_html=False) # Convert to HTML. full_html=False returns only the div while True returns full HTML document
+
+    sleep_chart = px.scatter(
+        x=[s.date for s in sleep_data], # Extract dates
+        y=[s.hours for s in sleep_data], # Extract sleep counts
+        title='Daily Sleep',
+        labels={'x': 'Date', 'y': 'Sleep (hours)'}
+    ).to_html(full_html=False) # Convert to HTML
+
+    steps_chart = px.bar(
+        x=[s.date for s in steps_data], # Extract dates
+        y=[s.count for s in steps_data], # Extract step counts
+        title='Daily Steps',
+        labels={'x': 'Date', 'y': 'Steps'}
+    ).to_html(full_html=False) # Convert to HTML
+
+    weight_chart = px.line(
+        x=[w.date for w in weight_data], # Extract dates
+        y=[w.value for w in weight_data], # Extract weight values
+        title='Weight Trend',
+        labels={'x': 'Date', 'y': 'Weight (lbs)'}
+    ).to_html(full_html=False) # Convert to HTML
+
+    '''return passes the charts to the dashboard template'''
+    return render_template('dashboard.html', 
+                           calories_chart=calories_chart, 
+                           sleep_chart=sleep_chart, 
+                           steps_chart=steps_chart,
+                           weight_chart=weight_chart)
 
 if __name__ == '__main__':
     app.run(debug=True) # Run the application in debug mode
