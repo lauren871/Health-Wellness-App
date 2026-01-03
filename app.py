@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Flask, request, redirect, render_template
 from config import Config # Import configuration settings
 from models import db  # Import the database object
-from database import init_app, sample_data  # Import database initialization and sample data functions
+from database import init_app, sample_data, empty_db  # Import database initialization and sample data functions
 from models.health_models import Meal, Sleep, Steps, Weight  # Import health models
 
 app = Flask(__name__) # Initialize the Flask application
@@ -24,6 +24,7 @@ This is necessary for database operations to ensure they are executed within the
 App context allows access to application-specific resources like configuration and database connections
 '''
 with app.app_context():
+    # empty_db() # Clear existing data in the database
     sample_data() # Populate the database with sample data
 
 @app.route('/') # Define root/home route/landing page
